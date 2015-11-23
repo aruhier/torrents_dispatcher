@@ -2,6 +2,7 @@ import bencodepy
 import glob
 import logging
 import os
+import re
 import shutil
 
 logger = logging.getLogger(__name__)
@@ -54,13 +55,20 @@ class TorrentsDistributor():
             try:
                 decoded_torrent = bencodepy.decode_from_file(torrent)
                 tracker = decoded_torrent[b"announce"].decode()
+                logger.debug("Tracker of %s: %s" %(torrent, tracker))
+                regex = r"^.*://%s(:\d*|)(/.*|)$"
                 if isinstance(self.filters["trackers"], str):
-                    match = match and self.filters["trackers"] in tracker
+                    match = (
+                        match and
+                        re.match(regex % self.filters["trackers"], tracker)
+                    )
                 else:
                     match = (
                         match and
-                        any([f_tracker in tracker
-                             for f_tracker in self.filters["trackers"]])
+                        any([
+                            re.match(regex % f_tracker, tracker)
+                            for f_tracker in self.filters["trackers"]
+                        ])
                     )
             except Exception as e:
                 logger.info(
@@ -68,6 +76,7 @@ class TorrentsDistributor():
                 )
                 logger.debug(e)
                 pass
+        logger.debug("%s match %s" % (torrent, match))
         return match
 
     def scan(self, src):
@@ -111,6 +120,7 @@ class TorrentsDistributor():
                     if not dryrun:
                         shutil.move(torrent, target)
                     break
+                logger.warning("%s cannot be moved, all targets are full.")
 
     def __init__(self, sources=None, targets=None, download_dirs=None,
                  filters=None, limit=None, *args, **kwargs):
