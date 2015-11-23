@@ -1,5 +1,6 @@
 import bencodepy
 import glob
+import itertools
 import logging
 import os
 import re
@@ -113,14 +114,19 @@ class TorrentsDistributor():
         """
         if src is None:
             src = self.sources
+        logger.debug(list())
         for torrent in [path for s in src for path in self.scan(s)]:
+            moved = False
             for target, nb_torrents in self.count():
                 if self.limit == 0 or nb_torrents < self.limit:
                     logger.info("Moving %s in %s" % (torrent, target))
                     if not dryrun:
                         shutil.move(torrent, target)
+                    moved = True
                     break
-                logger.warning("%s cannot be moved, all targets are full.")
+            if not moved:
+                logger.warning("%s cannot be moved, all targets are full."
+                               % torrent)
 
     def __init__(self, sources=None, targets=None, download_dirs=None,
                  filters=None, limit=None, *args, **kwargs):
