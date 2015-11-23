@@ -1,6 +1,5 @@
 import bencodepy
 import glob
-import itertools
 import logging
 import os
 import re
@@ -9,7 +8,7 @@ import shutil
 logger = logging.getLogger(__name__)
 
 
-class TorrentsDistributor():
+class TorrentsDispatcher():
     """
     Group of torrents to distribute
 

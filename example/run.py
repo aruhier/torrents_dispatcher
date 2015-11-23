@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 
 """
-Torrents distributor
+Torrents dispatcher
 """
 
 import glob
 import os
 import logging
-from torrents_distributor import TorrentsDistributor
+from torrents_dispatcher import TorrentsDispatcher
 
 # A torrent folder should not contain more than the defined limit
 LIMIT = 1000
@@ -18,7 +18,7 @@ if __name__ == "__main__":
 
     GLOBAL_BLACKHOLE = "/mnt/data/torrents/global_blackhole/"
 
-    example_com = TorrentsDistributor(
+    example_com = TorrentsDispatcher(
         sources=[GLOBAL_BLACKHOLE, ],
         filters={"trackers": ["tracker.example.com", ]},
         targets=glob.glob("/mnt/data/torrents/watchdir/rtorrent[0-9]/"),
@@ -26,7 +26,7 @@ if __name__ == "__main__":
         limit=LIMIT,
     )
 
-    providers = TorrentsDistributor(
+    providers = TorrentsDispatcher(
         sources=[os.path.join(GLOBAL_BLACKHOLE, "providers"), ],
         targets=["/mnt/data/torrents/watchdir/rtorrent/providers/", ],
         download_dirs=["/mnt/data/torrents/providers_completed/", ],
