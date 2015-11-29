@@ -15,6 +15,8 @@ class TorrentsDispatcher():
     Defined by blackholes to use as sources and targets, paths where files are
     downloaded.
     """
+    #: name for this dispatcher
+    name = None
     #: blackholes to use as sources
     sources = list()
     #: apply filters on torrents in the backhole source
@@ -89,12 +91,13 @@ class TorrentsDispatcher():
             src = [src] if isinstance(src, str) else src
         files = []
         for s in src:
+            logger.debug("Scanning %s…" % s)
             if os.path.isdir(s):
                 files += filter(
                     self.filter, glob.glob(os.path.join(s, "*.torrent"))
                 )
             elif os.path.isfile(s):
-                if filter(s):
+                if self.filter(s):
                     files.append(s)
             else:
                 raise Exception("Cannot read file or directory %s" % s)
@@ -111,9 +114,9 @@ class TorrentsDispatcher():
         :param dryrun: doesn't move files, just show what has been done.
                        Setting the logger level to INFO is needed.
         """
+        nb_torrents_moved = 0
         if src is None:
             src = self.sources
-        logger.debug(list())
         for torrent in [path for s in src for path in self.scan(s)]:
             moved = False
             for target, nb_torrents in self.count():
@@ -122,13 +125,28 @@ class TorrentsDispatcher():
                     if not dryrun:
                         shutil.move(torrent, target)
                     moved = True
+                    nb_torrents_moved += 1
                     break
             if not moved:
                 logger.warning("%s cannot be moved, all targets are full."
                                % torrent)
+        return nb_torrents_moved
 
-    def __init__(self, sources=None, targets=None, download_dirs=None,
-                 filters=None, limit=None, *args, **kwargs):
+    def search(self, pattern):
+        """
+        Search for a pattern in download dirs
+        """
+        results = [
+            os.path.join(d, name) for d in self.download_dirs
+            for name in os.listdir(d)
+            if all([word.lower() in name.lower() for word in pattern])
+        ]
+        return results
+
+    def __init__(self, name=None, sources=None, targets=None,
+                 download_dirs=None, filters=None, limit=None,
+                 *args, **kwargs):
+        self.name = name if name else self.name
         self.sources = sources if sources else self.sources
         self.filters = filters if filters else self.filters
         self.targets = targets if targets else self.targets
