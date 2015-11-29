@@ -55,7 +55,7 @@ class TorrentsDispatcher():
             try:
                 decoded_torrent = bencodepy.decode_from_file(torrent)
                 tracker = decoded_torrent[b"announce"].decode()
-                logger.debug("Tracker of %s: %s" %(torrent, tracker))
+                logger.debug("Tracker of %s: %s" % (torrent, tracker))
                 regex = r"^.*://%s(:\d*|)(/.*|)$"
                 if isinstance(self.filters["trackers"], str):
                     match = (
