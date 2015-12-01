@@ -25,7 +25,7 @@ except ImportError:
 def search(parsed_args, *args, **kwargs):
     terms = parsed_args.terms
     hide_groups_name = parsed_args.hide_groups_name
-    for t in config.TORRENT_GROUPS:
+    for t in config.TORRENTS_GROUPS:
         results = t.search(terms)
         if not len(results):
             continue
@@ -41,7 +41,7 @@ def search(parsed_args, *args, **kwargs):
 
 
 def move(dryrun=False, *args, **kwargs):
-    nb_moved = sum([t.move(dryrun=dryrun) for t in config.TORRENT_GROUPS])
+    nb_moved = sum([t.move(dryrun=dryrun) for t in config.TORRENTS_GROUPS])
     if nb_moved:
         logger.debug("All torrents moved")
     else:
