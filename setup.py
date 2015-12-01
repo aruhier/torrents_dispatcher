@@ -37,7 +37,7 @@ setup(
 
     keywords="torrent",
     packages=["torrents_dispatcher", ],
-    install_requires=["argparse", "bencodepy"],
+    install_requires=["appdirs", "argparse", "bencodepy"],
     entry_points={
         'console_scripts': [
             'torrdispatcher = torrents_dispatcher.__main__:parse_args',
