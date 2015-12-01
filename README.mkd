@@ -1,0 +1,60 @@
+Torrents dispatcher
+===================
+
+If you have split all your seeding torrents into multiple torrent clients, you
+have to deal with multiple watch directories (one or more by client). This
+application allows you to define multiple groups, and then dispatch your
+torrents from a global blackhole to one of your watch directory.
+
+It also allows you to search a torrent in all your download directories.
+
+Installation
+------------
+
+Just run:
+
+```
+pip3 install torrents_dispatcher
+```
+
+The script is compatible with Python 3.4 and more.
+
+
+Configuration
+-------------
+
+Create a configuration file in `~/.config/torrents_dispatcher/config.py`. You
+can have an example of a configuration in the `example` directory.
+
+
+Usage
+-----
+
+Run the application by calling `torrdispatcher`:
+
+```
+$ torrdispatcher -h
+
+usage: torrdispatcher [-h] [-l LIMIT_TO] [-d] {list,move,search} ...
+
+Dispatch your torrents to your different watchdirs
+
+positional arguments:
+  {list,move,search}
+    list                list torrent groups
+    move                scan and dispatch the torrent files
+    search              search in downloads
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -l LIMIT_TO, --limit LIMIT_TO
+                        limit to group names
+  -d, --debug           set the debug level
+```
+
+
+License
+-------
+
+Tool under the BSD license. Do not hesitate to report bugs, ask me some
+questions or do some pull request if you want to !

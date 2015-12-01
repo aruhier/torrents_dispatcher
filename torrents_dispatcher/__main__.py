@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-
-"""
-Torrents distributor
-"""
-
 import appdirs
 import argparse
 import logging
@@ -68,7 +62,7 @@ def search(parsed_args, *args, **kwargs):
             print("\n######\n")
 
 
-if __name__ == "__main__":
+def parse_args():
     parser = argparse.ArgumentParser(
         description="Dispatch your torrents to your different watchdirs"
     )
@@ -95,7 +89,7 @@ if __name__ == "__main__":
                            dest="hide_groups_name", action="store_true")
     sp_search.set_defaults(func=search)
 
-    parser.add_argument("-l", "--limit", help="limit to group names…",
+    parser.add_argument("-l", "--limit", help="limit to group names",
                         dest="limit_to", action="append", default=[])
     # Debug option
     parser.add_argument('-d', '--debug', help="set the debug level",
@@ -116,3 +110,6 @@ if __name__ == "__main__":
     else:
         arg_parser.print_help()
         sys.exit(1)
+
+if __name__ == "__main__":
+    parse_args()
