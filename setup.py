@@ -11,17 +11,11 @@ from setuptools import setup
 
 here = path.abspath(path.dirname(__file__))
 
-# Get the long description from the README file
-with open(path.join(here, "README.mkd"), encoding="utf-8") as f:
-    long_description = f.read()
-
-
 setup(
     name="torrents_dispatcher",
     version="0.0.1",
 
     description="Dispatch your torrents between multiple torrents clients",
-    long_description=long_description,
 
     url="https://github.com/Anthony25/torrents_dispatcher",
     author="Anthony25 <Anthony Ruhier>",
