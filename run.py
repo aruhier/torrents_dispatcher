@@ -17,9 +17,10 @@ try:
     import config
 except ImportError:
     logger.critical(
-        "Configuration file not found. Please create the file %s" %
+        "Configuration file not found. Please create the file %s." %
         appdirs.user_config_dir(APP_NAME)
     )
+    sys.exit(2)
 
 
 def limit_to_groups(torrents_groups, names):
