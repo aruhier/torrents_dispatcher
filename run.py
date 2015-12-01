@@ -31,6 +31,12 @@ def limit_to_groups(torrents_groups, names):
     return filtered_groups
 
 
+def list_groups(parsed_args, *args, **kwargs):
+    for t in config.TORRENTS_GROUPS:
+        print(t.describe())
+        print()
+
+
 def move(parsed_args, *args, **kwargs):
     dryrun = parsed_args.dryrun
     nb_moved = sum([
@@ -69,12 +75,16 @@ if __name__ == "__main__":
     # Start/Stop/Show command
     sp_action = parser.add_subparsers()
 
+    sp_list = sp_action.add_parser("list", help="list torrent groups")
+    sp_list.set_defaults(func=list_groups)
+
     sp_move = sp_action.add_parser(
         "move", help="scan and dispatch the torrent files"
     )
     sp_move.add_argument('-D', '--dryrun',
                          help="dry run",
                          dest="dryrun", action="store_true")
+    sp_move.set_defaults(func=move)
 
     sp_search = sp_action.add_parser("search", help="search in downloads")
     sp_search.add_argument('terms', metavar='terms', type=str, nargs='+',
@@ -82,9 +92,6 @@ if __name__ == "__main__":
     sp_search.add_argument('-H', '--hide-groups',
                            help="hide group names in the results",
                            dest="hide_groups_name", action="store_true")
-
-    # Set function to call for each options
-    sp_move.set_defaults(func=move)
     sp_search.set_defaults(func=search)
 
     parser.add_argument("-l", "--limit", help="limit to group names…",

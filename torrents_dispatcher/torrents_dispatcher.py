@@ -28,6 +28,19 @@ class TorrentsDispatcher():
     #: download dirs, used to search a torrent
     download_dirs = list()
 
+    def describe(self):
+        """
+        Describe the group
+        """
+        return (
+            "Name: %s\n"
+            "Blackholes to watch: %s\n"
+            "Watchdirs to target: %s\n"
+            "Downloads directories: %s"
+            % (self.name or "undefined", self.sources, self.targets,
+               self.download_dirs)
+        )
+
     def count(self, target=None):
         """
         Count how many torrents are in each target
