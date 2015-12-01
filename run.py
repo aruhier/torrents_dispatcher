@@ -22,10 +22,31 @@ except ImportError:
     )
 
 
+def limit_to_groups(torrents_groups, names):
+    if not len(names):
+        return torrents_groups
+    filtered_groups = [tg for tg in torrents_groups if tg.name in names]
+    if not len(filtered_groups):
+        logging.warning("No group exists with that name")
+    return filtered_groups
+
+
+def move(parsed_args, *args, **kwargs):
+    dryrun = parsed_args.dryrun
+    nb_moved = sum([
+        t.move(dryrun=dryrun)
+        for t in limit_to_groups(config.TORRENTS_GROUPS, parsed_args.limit_to)
+    ])
+    if nb_moved:
+        logger.debug("All torrents moved")
+    else:
+        logger.debug("Nothing to move")
+
+
 def search(parsed_args, *args, **kwargs):
     terms = parsed_args.terms
     hide_groups_name = parsed_args.hide_groups_name
-    for t in config.TORRENTS_GROUPS:
+    for t in limit_to_groups(config.TORRENTS_GROUPS, parsed_args.limit_to):
         results = t.search(terms)
         if not len(results):
             continue
@@ -40,14 +61,6 @@ def search(parsed_args, *args, **kwargs):
             print("\n######\n")
 
 
-def move(dryrun=False, *args, **kwargs):
-    nb_moved = sum([t.move(dryrun=dryrun) for t in config.TORRENTS_GROUPS])
-    if nb_moved:
-        logger.debug("All torrents moved")
-    else:
-        logger.debug("Nothing to move")
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Dispatch your torrents to your different watchdirs"
@@ -55,26 +68,30 @@ if __name__ == "__main__":
 
     # Start/Stop/Show command
     sp_action = parser.add_subparsers()
+
+    sp_move = sp_action.add_parser(
+        "move", help="scan and dispatch the torrent files"
+    )
+    sp_move.add_argument('-D', '--dryrun',
+                         help="dry run",
+                         dest="dryrun", action="store_true")
+
     sp_search = sp_action.add_parser("search", help="search in downloads")
     sp_search.add_argument('terms', metavar='terms', type=str, nargs='+',
                            help='terms to search')
     sp_search.add_argument('-H', '--hide-groups',
                            help="hide group names in the results",
                            dest="hide_groups_name", action="store_true")
-    sp_move = sp_action.add_parser(
-        "move", help="scan and dispatch the torrent files"
-    )
 
     # Set function to call for each options
-    sp_search.set_defaults(func=search)
     sp_move.set_defaults(func=move)
+    sp_search.set_defaults(func=search)
 
+    parser.add_argument("-l", "--limit", help="limit to group names…",
+                        dest="limit_to", action="append", default=[])
     # Debug option
     parser.add_argument('-d', '--debug', help="set the debug level",
                         dest="debug", action="store_true")
-    parser.add_argument('-D', '--dryrun',
-                        help="dry run (only used when moving torrents)",
-                        dest="dryrun", action="store_true")
     arg_parser = parser
 
     # Parse argument
@@ -89,4 +106,5 @@ if __name__ == "__main__":
     if hasattr(args, "func"):
         args.func(parsed_args=args)
     else:
-        move(parsed_args=args)
+        arg_parser.print_help()
+        sys.exit(1)
