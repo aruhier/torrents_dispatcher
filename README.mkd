@@ -17,6 +17,8 @@ Just run:
 pip3 install torrents_dispatcher
 ```
 
+If you are running on ArchLinux, there also is an AUR package
+`torrents_dispatcher`.
 The script is compatible with Python 3.4 and more.
 
 
@@ -24,7 +26,43 @@ Configuration
 -------------
 
 Create a configuration file in `~/.config/torrents_dispatcher/config.py`. You
-can have an example of a configuration in the `example` directory.
+can find an example of a configuration in the `example` directory.
+
+### Defining a group
+
+First import TorrentsDispatcher:
+
+```
+from torrents_dispatcher import TorrentsDispatcher
+```
+
+Create a TorrentsDispatcher object, with these attributes:
+  * name: optional, used during the search to print more distinctly your groups
+  * sources: list of black holes to watch
+  * filters: dictionary each key corresponds to a filter, values are lists.
+    For now, you can only use the filter "trackers", that check in all torrents
+    of your sources if the announcer matches with the values you have put.
+  * targets: list of watch directories where moving your torrents. Multiple
+    watch directories allows torrents_dispatcher to do a load balancing.
+  * download_dirs: list of directories where your completed files are. Allows
+    you to use the Search feature, to easily find your torrents.
+  * limit: if a limit is set, a watch directory that has this limit number of
+    torrents will not be used anymore during the dispatchment.
+
+
+### Append it to a group list
+
+In the configuration, only the variable ``TORRENTS_GROUPS`` is really used. It
+is only a list where you have to add all the groups you constructed before.
+
+So if you constructed 2 groups, ``group1`` and ``group2``, add at the end of
+your configuration file:
+
+```
+TORRENTS_GROUPS = [group1, group2]
+```
+
+Now you can use torrdispatcher to manage your watch directories!
 
 
 Usage
