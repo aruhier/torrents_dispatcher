@@ -1,3 +1,4 @@
+from operator import itemgetter
 import bencodepy
 import glob
 import logging
@@ -131,16 +132,13 @@ class TorrentsDispatcher():
         if src is None:
             src = self.sources
         for torrent in [path for s in src for path in self.scan(s)]:
-            moved = False
-            for target, nb_torrents in self.count():
-                if self.limit == 0 or nb_torrents < self.limit:
-                    logger.info("Moving %s in %s" % (torrent, target))
-                    if not dryrun:
-                        shutil.move(torrent, target)
-                    moved = True
-                    nb_torrents_moved += 1
-                    break
-            if not moved:
+            target, nb_torrents = min(self.count(), key=itemgetter(1))
+            if self.limit == 0 or nb_torrents < self.limit:
+                logger.info("Moving %s in %s" % (torrent, target))
+                if not dryrun:
+                    shutil.move(torrent, target)
+                nb_torrents_moved += 1
+            else:
                 logger.warning("%s cannot be moved, all targets are full."
                                % torrent)
         return nb_torrents_moved
