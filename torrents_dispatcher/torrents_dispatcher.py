@@ -106,6 +106,7 @@ class TorrentsDispatcher():
         files = []
         for s in src:
             logger.debug("Scanning %s…" % s)
+            s = os.path.expanduser(s)
             if os.path.isdir(s):
                 files += filter(
                     self.filter, glob.glob(os.path.join(s, "*.torrent"))
@@ -148,7 +149,8 @@ class TorrentsDispatcher():
         Search for a pattern in download dirs
         """
         results = [
-            os.path.join(d, name) for d in self.download_dirs
+            os.path.join(os.path.expanduser(d), name)
+            for d in self.download_dirs
             for name in os.listdir(d)
             if all([word.lower() in name.lower() for word in pattern])
         ]
