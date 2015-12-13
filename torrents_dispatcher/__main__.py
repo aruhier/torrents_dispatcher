@@ -22,7 +22,7 @@ def limit_to_groups(torrents_groups, names):
         return torrents_groups
     filtered_groups = [tg for tg in torrents_groups if tg.name in names]
     if not len(filtered_groups):
-        logging.warning("No group exists with that name")
+        logger.warning("No group exists with that name")
     return filtered_groups
 
 
