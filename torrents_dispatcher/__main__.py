@@ -1,5 +1,6 @@
 import appdirs
 import argparse
+import itertools
 import logging
 import sys
 
@@ -30,6 +31,26 @@ def list_groups(parsed_args, *args, **kwargs):
     for t in config.TORRENTS_GROUPS:
         print(t.describe())
         print()
+
+
+def have(parsed_args, *args, **kwargs):
+    torrents = parsed_args.torrents
+    hide_groups_name = parsed_args.hide_groups_name
+    for t in limit_to_groups(config.TORRENTS_GROUPS, parsed_args.limit_to):
+        results = t.have(*torrents)
+        try:
+            first_result = next(results)
+        except StopIteration:
+            continue
+        if not hide_groups_name:
+            if t.name:
+                print("### Group %s: ###\n" % t.name)
+            else:
+                print("### Group unnamed: ###\n")
+        for r in itertools.chain([first_result], results):
+            print("\"%s\" found in \"%s\"" % r)
+        if not hide_groups_name:
+            print("\n######\n")
 
 
 def move(parsed_args, *args, **kwargs):
@@ -80,6 +101,18 @@ def parse_args():
                          help="dry run",
                          dest="dryrun", action="store_true")
     sp_move.set_defaults(func=move)
+
+    sp_have = sp_action.add_parser(
+        "have",
+        help=("check if watch directories already have a torrent with the "
+              "same hash")
+    )
+    sp_have.add_argument('torrents', metavar='torrents', type=str, nargs='+',
+                         help='torrents to look for')
+    sp_have.add_argument('-H', '--hide-groups',
+                         help="hide group names in the results",
+                         dest="hide_groups_name", action="store_true")
+    sp_have.set_defaults(func=have)
 
     sp_search = sp_action.add_parser("search", help="search in downloads")
     sp_search.add_argument('terms', metavar='terms', type=str, nargs='+',

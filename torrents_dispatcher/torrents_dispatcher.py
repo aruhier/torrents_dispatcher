@@ -2,6 +2,7 @@ from operator import itemgetter
 import bencodepy
 import glob
 import logging
+import ntpath
 import os
 import re
 import shutil
@@ -92,7 +93,7 @@ class TorrentsDispatcher():
                 )
                 logger.debug(e)
                 pass
-        logger.debug("%s match %s" % (torrent, match))
+        logger.debug("%s matches %s" % (torrent, match or "no filter"))
         return match
 
     def scan(self, src):
@@ -116,6 +117,7 @@ class TorrentsDispatcher():
                     files.append(s)
             else:
                 raise Exception("Cannot read file or directory %s" % s)
+        logger.debug("Found %s in \"%s\"" % (files, src))
         return files
 
     def move(self, src=None, dryrun=False):
@@ -132,7 +134,23 @@ class TorrentsDispatcher():
         nb_torrents_moved = 0
         if src is None:
             src = self.sources
-        for torrent in [path for s in src for path in self.scan(s)]:
+        torrents_to_move = [path for s in src for path in self.scan(s)]
+        for t, _ in self.have(*torrents_to_move):
+            try:
+                torrents_to_move.pop(torrents_to_move.index(t))
+                logger.info("Torrent \"%s\" already in a wathdir, pass…" % t)
+                if not dryrun:
+                    try:
+                        os.remove(t)
+                    except Exception as e:
+                        logger.warning("Error when deleting \"%s\"", t)
+                        print(e)
+            except (ValueError, IndexError):
+                pass
+            finally:
+                if len(torrents_to_move) == 0:
+                    break
+        for torrent in torrents_to_move:
             target, nb_torrents = min(self.count(), key=itemgetter(1))
             if self.limit == 0 or nb_torrents < self.limit:
                 logger.info("Moving %s in %s" % (torrent, target))
@@ -144,17 +162,88 @@ class TorrentsDispatcher():
                                % torrent)
         return nb_torrents_moved
 
-    def search(self, pattern):
+    def _search(self, pattern, dirs, exact_match=False):
+        """
+        Search a file or pattern in a list of directories
+
+        :param pattern: pattern to search
+        :param dirs: directories where searching
+        :param exact_match: if True, the filename to match exactly with the
+                            pattern (and not only contain it)
+        """
+        pattern = [pattern] if isinstance(pattern, str) else pattern
+        results = [
+            os.path.join(os.path.expanduser(d), name)
+            for d in dirs
+            for name in os.listdir(d)
+            if not exact_match and all(
+                [word.lower() in name.lower() for word in pattern]
+            ) or exact_match and " ".join(pattern) == name
+        ]
+        return results
+
+    def search_in_watchlist(self, pattern, exact_match=True):
+        return self._search(pattern, self.targets, exact_match=True)
+
+    def search(self, pattern, exact_match=False):
         """
         Search for a pattern in download dirs
         """
-        results = [
-            os.path.join(os.path.expanduser(d), name)
-            for d in self.download_dirs
-            for name in os.listdir(d)
-            if all([word.lower() in name.lower() for word in pattern])
-        ]
-        return results
+        return self._search(pattern, self.download_dirs,
+                            exact_match=exact_match)
+
+    def _search_multiple_hash(self, torrent_lst, dst_lst):
+        """
+        Search in a list of hash which ones match with the destination list
+        """
+        if len(torrent_lst) == 0:
+            return
+        for dst in dst_lst:
+            dst = os.path.expanduser(dst)
+            if os.path.isdir(dst):
+                logger.debug("Scanning all torrents into %s" % dst)
+                for t, h in self._search_multiple_hash(
+                    torrent_lst, glob.glob(os.path.join(dst, "*.torrent"))
+                ):
+                    yield t, h
+                return
+            try:
+                dst_hash = bencodepy.decode_from_file(dst)[b"info"][b"pieces"]
+                for t, h in torrent_lst.items():
+                    if dst_hash == h:
+                        logger.debug("Hash matches for %s", dst)
+                        yield t, dst
+            except Exception as e:
+                logger.error("Error when opening the torrent %s" % dst)
+                logger.error(e)
+
+    def search_by_hash(self, torr_hash, *dst):
+        """
+        Compare a torrent hash with a list of torrents and returns those who
+        match
+        """
+        if not isinstance(torr_hash, bytes):
+            torr_hash = torr_hash.encode()
+        for d in dst:
+            d_hash = bencodepy.decode_from_file(d)[b"info"][b"pieces"]
+            if torr_hash == d_hash:
+                yield d
+
+    def have(self, *src_lst):
+        """
+        Check if the torrent is already in a watch directory.
+
+        param src_lst: torrents to scan
+        """
+        hash_lst = {
+            src: bencodepy.decode_from_file(src)[b"info"][b"pieces"]
+            for src in src_lst if len(src)
+        }
+        if not hash_lst:
+            return
+        logger.debug("Searching if having the list %s…" % hash_lst.keys())
+        for src, t in self._search_multiple_hash(hash_lst, self.targets):
+            yield (src, t)
 
     def __init__(self, name=None, sources=None, targets=None,
                  download_dirs=None, filters=None, limit=None,
