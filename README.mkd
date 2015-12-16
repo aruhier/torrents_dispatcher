@@ -73,12 +73,14 @@ Run the application by calling `torrdispatcher`:
 ```
 $ torrdispatcher -h
 
-usage: torrdispatcher [-h] [-l LIMIT_TO] [-d] {list,move,search} ...
+usage: torrdispatcher [-h] [-l LIMIT_TO] [-d] {have,list,move,search} ...
 
 Dispatch your torrents to your different watchdirs
 
 positional arguments:
-  {list,move,search}
+  {have,list,move,search}
+    have                check if watch directories already have a torrent with
+                        the same hash
     list                list torrent groups
     move                scan and dispatch the torrent files
     search              search in downloads
