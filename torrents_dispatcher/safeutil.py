@@ -1,19 +1,12 @@
 #!/usr/bin/env python
 """
-Author: Alex Chan
-This is a script designed to be "safe" drop-in replacements for the
-shutil move() and copyfile() functions.
+Original author: Alex Chan
 
-These functions are safe because they should never overwrite an
-existing file. In particular, if you try to move/copy to dst and
-there's already a file at dst, these functions will attempt to copy to
-a slightly different (but free) filename, to avoid accidental data loss.
-
-More background here: http://alexwlchan.net/2015/06/safer-file-copying/
+Handles overwrite with shutil move and copy functions
 """
 
-import filecmp
 import os
+import shutil
 
 
 def _increment_filename(filename, marker='-'):
@@ -96,65 +89,17 @@ def copyfile(src, dst):
     if not os.path.exists(src):
         raise ValueError('Source file does not exist: {}'.format(src))
 
-    # Create a folder for dst if one does not already exist
-    if not os.path.exists(os.path.dirname(dst)):
-        os.makedirs(os.path.dirname(dst))
-
     # Keep trying to copy the file until it works
     while True:
-
+        filename = os.path.basename(dst)
+        if filename == "":
+            filename = os.path.basename(src)
         dst_gen = _increment_filename(dst)
         dst = next(dst_gen)
 
-        # Check if there is a file at the destination location
-        if os.path.exists(dst):
-
-            # If the namesake is the same as the source file, then we don't
-            # need to do anything else.
-            if filecmp.cmp(src, dst):
-                return dst
-
-        else:
-            # If there is no file at the destination, then we attempt to write
-            # to it. There is a risk of a race condition here: if a file
-            # suddenly pops into existence after the `if os.path.exists()`
-            # check, then writing to it risks overwriting this new file.
-            #
-            # We write by transferring bytes using os.open(). Using the O_EXCL
-            # flag on the dst file descriptor will cause an OSError to be
-            # raised if the file pops into existence; the O_EXLOCK stops
-            # anybody else writing to the dst file while we're using it.
-            try:
-                src_fd = os.open(src, os.O_RDONLY)
-                dst_fd = os.open(dst, os.O_WRONLY | os.O_EXCL | os.O_CREAT)
-
-                # Read 100 bytes at a time, and copy them from src to dst
-                while True:
-                    data = os.read(src_fd, 100)
-                    os.write(dst_fd, data)
-
-                    # When there are no more bytes to read from the source
-                    # file, 'data' will be an empty string
-                    if not data:
-                        break
-
-                # If we get to this point, then the write has succeeded
-                return dst
-
-            # An OSError errno 17 is what happens if a file pops into existence
-            # at dst, so we print an error and try to copy to a new location.
-            # Any other exception is unexpected and should be raised as normal.
-            except OSError as e:
-                if e.errno != 17 or e.strerror != 'File exists':
-                    raise
-                else:
-                    print(
-                        'Race condition: %s just popped into existence' % dst
-                    )
-
-            finally:
-                os.close(src_fd)
-                os.close(dst_fd)
+        if not os.path.exists(dst):
+            shutil.copy(src, dst)
+            return dst
 
         # Copying to this destination path has been unsuccessful, so increment
         # the path and try again
