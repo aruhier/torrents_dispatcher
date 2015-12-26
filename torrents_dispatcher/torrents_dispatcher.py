@@ -2,10 +2,10 @@ from operator import itemgetter
 import bencodepy
 import glob
 import logging
-import ntpath
 import os
 import re
-import shutil
+
+from torrents_dispatcher import safeutil
 
 logger = logging.getLogger(__name__)
 
@@ -155,7 +155,7 @@ class TorrentsDispatcher():
             if self.limit == 0 or nb_torrents < self.limit:
                 logger.info("Moving %s in %s" % (torrent, target))
                 if not dryrun:
-                    shutil.move(torrent, target)
+                    safeutil.move(torrent, target)
                 nb_torrents_moved += 1
             else:
                 logger.warning("%s cannot be moved, all targets are full."

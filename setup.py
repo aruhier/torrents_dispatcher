@@ -13,7 +13,7 @@ here = path.abspath(path.dirname(__file__))
 
 setup(
     name="torrents_dispatcher",
-    version="0.0.2",
+    version="0.0.4",
 
     description="Dispatch your torrents between multiple torrents clients",
 
