@@ -126,8 +126,7 @@ def copyfile(src, dst):
             # anybody else writing to the dst file while we're using it.
             try:
                 src_fd = os.open(src, os.O_RDONLY)
-                dst_fd = os.open(
-                    dst, os.O_WRONLY | os.O_EXCL | os.O_CREAT | os.O_EXLOCK)
+                dst_fd = os.open(dst, os.O_WRONLY | os.O_EXCL | os.O_CREAT)
 
                 # Read 100 bytes at a time, and copy them from src to dst
                 while True:
