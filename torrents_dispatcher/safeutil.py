@@ -88,22 +88,14 @@ def copyfile(src, dst):
     """
     if not os.path.exists(src):
         raise ValueError('Source file does not exist: {}'.format(src))
+    elif len(os.path.basename(dst)) == 0 and os.path.isdir(dst):
+        dst = os.path.join(dst, os.path.basename(src))
 
-    # Keep trying to copy the file until it works
-    while True:
-        filename = os.path.basename(dst)
-        if filename == "":
-            filename = os.path.basename(src)
-        dst_gen = _increment_filename(dst)
+    dst_gen = _increment_filename(dst)
+    dst = next(dst_gen)
+    while os.path.exists(dst):
         dst = next(dst_gen)
-
-        if not os.path.exists(dst):
-            shutil.copy(src, dst)
-            return dst
-
-        # Copying to this destination path has been unsuccessful, so increment
-        # the path and try again
-        dst = next(dst_gen)
+    shutil.copy(src, dst)
 
 
 def move(src, dst):
