@@ -206,7 +206,7 @@ class TorrentsDispatcher():
                     torrent_lst, glob.glob(os.path.join(dst, "*.torrent"))
                 ):
                     yield t, h
-                return
+                continue
             try:
                 dst_hash = bencodepy.decode_from_file(dst)[b"info"][b"pieces"]
                 for t, h in torrent_lst.items():
