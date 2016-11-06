@@ -66,6 +66,12 @@ class TorrentsDispatcher():
 
         :param torrent: path of torrent file to apply the filters on
         """
+        def re_match_with_subfilter(regex, tracker, exclude=False):
+            if exclude:
+                return not re.match(regex, tracker)
+            else:
+                return re.match(regex, tracker)
+
         match = True
         if (self.filters.get("trackers", False) and
                 len(self.filters["trackers"])):
@@ -75,18 +81,21 @@ class TorrentsDispatcher():
                 logger.debug("Tracker of %s: %s" % (torrent, tracker))
                 regex = r"^.*://%s(:\d*|)(/.*|)$"
                 if isinstance(self.filters["trackers"], str):
-                    match = (
-                        match and
-                        re.match(regex % self.filters["trackers"], tracker)
+                    f_tracker = self.filters["trackers"]
+                    exclude = f_tracker.startswith("!")
+
+                    match = match and re_match_with_subfilter(
+                        regex % f_tracker, tracker, exclude
                     )
                 else:
-                    match = (
-                        match and
-                        any([
-                            re.match(regex % f_tracker, tracker)
-                            for f_tracker in self.filters["trackers"]
-                        ])
-                    )
+                    matches = []
+                    for f_tracker in self.filter["trackers"]:
+                        exclude = f_tracker.startswith("!")
+
+                        matches.append(re_match_with_subfilter(
+                            regex % f_tracker, tracker, exclude
+                        ))
+                    match = match and any(matches)
             except Exception as e:
                 logger.info(
                     "%s doesn't contain a announce field, pass" % torrent
