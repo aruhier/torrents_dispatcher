@@ -88,7 +88,7 @@ class TorrentsDispatcher():
                     match = match and tracker_matches(f_tracker, tracker)
                 else:
                     matches = []
-                    for f_tracker in self.filter["trackers"]:
+                    for f_tracker in self.filters["trackers"]:
                         matches.append(tracker_matches(f_tracker, tracker))
                     match = match and any(matches)
             except Exception as e:
