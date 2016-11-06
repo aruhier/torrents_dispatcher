@@ -66,11 +66,14 @@ class TorrentsDispatcher():
 
         :param torrent: path of torrent file to apply the filters on
         """
-        def re_match_with_subfilter(regex, tracker, exclude=False):
+        def tracker_matches(f_tracker, tracker):
+            regex = r"^.*://%s(:\d*|)(/.*|)$"
+            exclude = f_tracker.startswith("!")
             if exclude:
-                return not re.match(regex, tracker)
+                f_tracker = f_tracker[1:]
+                return not re.match(regex % f_tracker, tracker)
             else:
-                return re.match(regex, tracker)
+                return re.match(regex % f_tracker, tracker)
 
         match = True
         if (self.filters.get("trackers", False) and
@@ -79,22 +82,14 @@ class TorrentsDispatcher():
                 decoded_torrent = bencodepy.decode_from_file(torrent)
                 tracker = decoded_torrent[b"announce"].decode()
                 logger.debug("Tracker of %s: %s" % (torrent, tracker))
-                regex = r"^.*://%s(:\d*|)(/.*|)$"
                 if isinstance(self.filters["trackers"], str):
                     f_tracker = self.filters["trackers"]
-                    exclude = f_tracker.startswith("!")
 
-                    match = match and re_match_with_subfilter(
-                        regex % f_tracker, tracker, exclude
-                    )
+                    match = match and tracker_matches(f_tracker, tracker)
                 else:
                     matches = []
                     for f_tracker in self.filter["trackers"]:
-                        exclude = f_tracker.startswith("!")
-
-                        matches.append(re_match_with_subfilter(
-                            regex % f_tracker, tracker, exclude
-                        ))
+                        matches.append(tracker_matches(f_tracker, tracker))
                     match = match and any(matches)
             except Exception as e:
                 logger.info(
